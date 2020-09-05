@@ -83,6 +83,54 @@ int ListDelete_Sq(SqList *sqList, int i, int *e) {
     return OK;
 }
 
+/**
+ * 要求La,Lb均升序排列，合并后Lc也升序,
+ * @param La
+ * @param Lb
+ * @param Lc
+ */
+void ListMerge_Sq(SqList *La, SqList *Lb, SqList *Lc) {
+    int *pa = La->elem, *pb = Lb->elem, *pc;
+//    init Lc
+    Lc->length = La->length + Lb->length;
+    Lc->listSize = Lc->length;
+    Lc->elem = (int *) malloc(Lc->listSize * sizeof(int));
+    pc = Lc->elem;
+
+    int *pa_last = La->elem + La->length - 1;
+    int *pb_last = Lb->elem + Lb->length - 1;
+    while (pa <= pa_last && pb <= pb_last) {
+        if (*pa <= *pb) {
+            *pc++ = *pa++;
+        } else {
+            *pc++ = *pb++;
+        }
+    }
+    while (pa <= pa_last) {
+        *pc++ = *pa++;
+    }
+    while (pb <= pb_last) {
+        *pc++ = *pb++;
+    }
+
+}
+
+/**
+ * 返回sqList中第一个与e相等的元素位置
+ * 0代表未发现
+ * @param sqList
+ * @param e
+ * @return
+ */
+int LocateElem_Sq(SqList *sqList, int e) {
+    int i = 1;
+    int *start = sqList->elem;
+    while (i <= sqList->length && *start++ != e) {
+        i++;
+    }
+    if (i <= sqList->length) return i;
+    else return 0;
+}
 void ListDisplay_Sq(SqList *sqList) {
     for (int i = 0; i < sqList->length; ++i) {
         printf("%d ", sqList->elem[i]);
@@ -106,5 +154,11 @@ int main() {
     ListDelete_Sq(&listA, 2, &deleteElem);
     printf("%d\n", deleteElem);
     ListDisplay_Sq(&listA);
+//    Merge Test
+    SqList Lc;
+    ListMerge_Sq(&listA, &listA, &Lc);
+    ListDisplay_Sq(&Lc);
+//    LocateElem Test
+    printf("%d\n", LocateElem_Sq(&Lc, 3));
     return 0;
 }
