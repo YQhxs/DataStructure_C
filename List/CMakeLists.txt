@@ -2,3 +2,6 @@
 #add_executable(List ${SOURCE_FILES})
 add_executable(SqList SqList.c)
 add_executable(LinkList LinkList.c)
+add_executable(SLinkList SLinkList.c)
+add_executable(LoopLinkList LoopLinkList.c)
+add_executable(DuLinkList DuLinkList.c)
