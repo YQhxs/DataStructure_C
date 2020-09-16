@@ -17,6 +17,7 @@ int InitLinkList(LinkList *linkList) {/*C只有值传递，模拟引用调用*/
     *linkList = (LinkList) malloc(sizeof(LNode));
     if (!*linkList)
         return ERROR;
+
     (*linkList)->next = NULL;
     return OK;
 }

@@ -5,3 +5,4 @@ set(CMAKE_C_STANDARD 11)
 
 add_subdirectory(Stack)
 add_subdirectory(List)
+add_subdirectory(Queue)
