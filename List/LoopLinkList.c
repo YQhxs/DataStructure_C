@@ -1,24 +1,31 @@
+//
+// Created by HXS on 2020/9/7.
+//
+/**
+ * 单向循环链表，带头结点
+ * 操作与单链表基本一致，差别在于循环条件不是
+ * p或p->next是否为空，而是他们是否是头结点
+ */
 #include <stdio.h>
 #include <stdlib.h>
 
 #define OK 0;
 #define ERROR -1;
-typedef struct LNode {
+typedef struct LoopNode {
     int data;
-    struct LNode *next;/* If the structure contains a pointer to itself, you have use the struct version to refer to it.can't use just "LNode *next" here */
-} LNode, *LinkList;
+    struct LoopNode *next;
+} LoopNode, *LLinkList;
 
 /**
  * 要求带头结点
  * @param linkList
  * @return
  */
-int InitLinkList(LinkList *linkList) {/*C只有值传递，模拟引用调用*/
-    *linkList = (LinkList) malloc(sizeof(LNode));
+int InitLinkList_L(LLinkList *linkList) {/*C只有值传递，模拟引用调用*/
+    *linkList = (LLinkList) malloc(sizeof(LoopNode));
     if (!*linkList)
         return ERROR;
-
-    (*linkList)->next = NULL;
+    (*linkList)->next = *linkList;
     return OK;
 }
 
@@ -28,13 +35,13 @@ int InitLinkList(LinkList *linkList) {/*C只有值传递，模拟引用调用*/
  * @param n
  * @return
  */
-int CreateLinkList_T(LinkList *linkList, int n) {
-    InitLinkList(linkList);
-    LinkList tail = *linkList;
+int CreateLinkList_T(LLinkList *linkList, int n) {
+    InitLinkList_L(linkList);
+    LLinkList tail = *linkList;
     for (int i = 0; i < n; ++i) {
-        LinkList newLNode = (LinkList) malloc(sizeof(LNode));
+        LLinkList newLNode = (LLinkList) malloc(sizeof(LoopNode));
         scanf("%d", &newLNode->data);
-        newLNode->next = NULL;
+        newLNode->next = *linkList;
 //        two step：modify the ‘next’ domain of tail pointer and update the tail node
         tail->next = newLNode;
         tail = newLNode;
@@ -48,10 +55,10 @@ int CreateLinkList_T(LinkList *linkList, int n) {
  * @param n
  * @return
  */
-int CreateLinkList_H(LinkList *linkList, int n) {
-    InitLinkList(linkList);
+int CreateLinkList_H(LLinkList *linkList, int n) {
+    InitLinkList_L(linkList);
     for (int i = 0; i < n; ++i) {
-        LinkList newLNode = (LinkList) malloc(sizeof(LNode));
+        LLinkList newLNode = (LLinkList) malloc(sizeof(LoopNode));
         scanf("%d", &newLNode->data);
 //      two step：modify the 'next' domain of newNode and head point
         newLNode->next = (*linkList)->next;
@@ -68,30 +75,35 @@ int CreateLinkList_H(LinkList *linkList, int n) {
  * @param e
  * @return
  */
-int InsertLinkList(LinkList *linkList, int i, int e) {
-    LinkList ptr = *linkList;
-    int j = 0;/*counter*/
+int InsertLinkList(LLinkList *linkList, int i, int e) {
+    LLinkList ptr = (*linkList)->next;
+    int j = 1;/*counter*/
 /*
  * find the node of index of i-1.
  * the role of ptr is to judge whether the headNode exists
- * and the loop ends normally(ptr!=NULL).
+ * and the loop ends normally(ptr!=*linkList).
  */
-    while (ptr && j < i - 1) {
+    while (j < i - 1 && ptr != *linkList) {
         ptr = ptr->next;
         j++;
     }
 /*
- * condition (ptr == NULL):due to i > n+1
- * condition (j > i-1):due to i < 1
- *
+ * Satisfied situation
+ * 1< i <= n+1 j=i-1
+ * i=1 j=1
+ *Unsatisfied situation
+ * i = 0 j=1
+ * i > n+1 j=n
  */
-    if (!ptr || j > i - 1) {
+    if (i == j || j == i - 1) {
+        LLinkList newNode = (LLinkList) malloc(sizeof(LoopNode));
+        newNode->data = e;
+        newNode->next = ptr->next;
+        ptr->next = newNode;
+    } else {
         return ERROR;
     }
-    LinkList newNode = (LinkList) malloc(sizeof(LNode));
-    newNode->data = e;
-    newNode->next = ptr->next;
-    ptr->next = newNode;
+
     return OK;
 }
 
@@ -102,29 +114,25 @@ int InsertLinkList(LinkList *linkList, int i, int e) {
  * @param e
  * @return
  */
-int DeleteLinkList(LinkList *linkList, int i, int *e) {
-    LinkList ptr = *linkList;
-    int j = 0;/*counter*/
+int DeleteLinkList(LLinkList *linkList, int i, int *e) {
+    LLinkList ptr = (*linkList)->next;
+    int j = 1;/*counter*/
 /*
  * find the node of index of i-1.
- * the role of ptr->next is to judge whether the firstElement exists
- * and the loop ends normally(ptr != NULL).
 */
-    while (ptr->next && j < i - 1) {
+    while (ptr != (*linkList) && j < i - 1) {
         ptr = ptr->next;
         ++j;
     }
-/*
- * condition (ptr == NULL):due to i > n
- * condition (j > i-1):due to i < 1
- * */
-    if (!ptr || j > i - 1) {
+
+    if (i == j || j == i - 1) {
+        LLinkList deletedNode = ptr->next;
+        *e = deletedNode->data;
+        ptr->next = deletedNode->next;
+        free(deletedNode);
+    } else {
         return ERROR;
     }
-    LinkList deletedNode = ptr->next;
-    *e = deletedNode->data;
-    ptr->next = deletedNode->next;
-    free(deletedNode);
     return OK;
 }
 
@@ -133,10 +141,10 @@ int DeleteLinkList(LinkList *linkList, int i, int *e) {
  * @param La
  * @param Lb
  */
-void MergeLinkList(LinkList *La, LinkList *Lb) {
-    LinkList pa = (*La)->next, pb = (*Lb)->next;/*same as SqList , compare from the first Element*/
-    LinkList Lc = *La, pc = Lc;/*no extra space*/
-    while (pa && pb) {
+void MergeLinkList(LLinkList *La, LLinkList *Lb) {
+    LLinkList pa = (*La)->next, pb = (*Lb)->next;/*same as SqList , compare from the first Element*/
+    LLinkList Lc = *La, pc = Lc;/*no extra space*/
+    while (pa != (*La) && pb != (*Lb)) {
         if (pa->data <= pb->data) {
             pc->next = pa;
             pc = pa;
@@ -159,27 +167,24 @@ void MergeLinkList(LinkList *La, LinkList *Lb) {
  * @param e
  * @return
  */
-int GetElemLinkList(LinkList linkList, int i, int *e) {
-    LinkList ptr = linkList->next;
+int GetElemLinkList(LLinkList linkList, int i, int *e) {
+    LLinkList ptr = linkList->next;
     int j = 1;/*counter*/
-    while (ptr && j < i) {/*loop i-1 times*/
+    while (ptr != linkList && j < i) {/*loop i-1 times*/
         ptr = ptr->next;
         ++j;
     }
-/*
- * condition (ptr == NULL):due to i > n
- * condition (j > i-1):due to i < 1
- */
-    if (!ptr || j > i) {
+    if (j != i) {
         return ERROR
     }
+
     *e = ptr->data;
     return OK;
 }
 
-void DisplayLinkList(LinkList linkList) {
-    LinkList ptr = linkList->next;
-    while (ptr) {
+void DisplayLinkList(LLinkList linkList) {
+    LLinkList ptr = linkList->next;
+    while (ptr != linkList) {
         printf("%d ", ptr->data);
         ptr = ptr->next;
     }
@@ -187,14 +192,14 @@ void DisplayLinkList(LinkList linkList) {
 }
 
 int main() {
-    LinkList La;
+    LLinkList La;
 // Init Test
-    InitLinkList(&La);
+    InitLinkList_L(&La);
 //    Create Test
-    LinkList Lb;
+    LLinkList Lb;
     CreateLinkList_T(&Lb, 3);
     DisplayLinkList(Lb);
-    LinkList Lc;
+    LLinkList Lc;
     CreateLinkList_H(&Lc, 3);
     DisplayLinkList(Lc);
 //  Insert Test
